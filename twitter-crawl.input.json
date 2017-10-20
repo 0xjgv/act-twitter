@@ -1,0 +1,14 @@
+{
+  "actId": "QHE4WsnHAwXRWaNF4",
+  "token": "WS5tRSq9pmnMMCEpsJEvZHhTg",
+  "postCSSSelector": "._hm7pe",
+  "extractActInput": {
+    "baseUrl": "https://www.instagram.com/",
+    "postCSSSelector": "._mck9w._gvoze._f2mse",
+    "usernames": [
+      "mcuban",
+      "lewishowes",
+      "garyvee"
+    ]
+  }
+}

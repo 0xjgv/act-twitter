@@ -1,0 +1,8 @@
+{ 
+  "baseUrl": "https://twitter.com/",
+  "postCSSSelector": ".tweet",
+  "usernames": [
+    "chrissanders88",
+    "DidierStevens"
+  ]
+}
