@@ -25,19 +25,16 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
     await page.waitForSelector(cssSelector);
 
     // Crawl page
-    const articleHandle = await page.$(cssSelector);
-    crawlResult = await page.evaluate((article) => {
-      const handle = article.querySelector('[title]').title;
-      let postText = [...article.querySelectorAll(`[title="${handle}"]`)];
-      postText = postText[1] ? postText[1].nextElementSibling.textContent : '';
-      const time = article.querySelector('time').getAttribute('datetime');
+    const tagHandle = await page.$(cssSelector);
+    crawlResult = await page.evaluate((tag) => {
+      const postText = tag.querySelector('.js-tweet-text-container').textContent;
+      const time = tag.querySelector('.client-and-actions').textContent;
       return {
-        handle,
         url: document.URL,
-        'post-text': postText || 'No text post',
-        'date/time': time,
+        'post-text': postText.trim(),
+        'date/time': time.trim(),
       };
-    }, articleHandle);
+    }, tagHandle);
 
     results[username].push(crawlResult);
   } catch (error) {

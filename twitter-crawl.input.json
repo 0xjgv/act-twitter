@@ -1,14 +1,13 @@
 {
-  "actId": "QHE4WsnHAwXRWaNF4",
+  "actId": "ipD4qrgEFKNwhep8w",
   "token": "WS5tRSq9pmnMMCEpsJEvZHhTg",
-  "postCSSSelector": "._hm7pe",
+  "postCSSSelector": ".permalink-tweet",
   "extractActInput": {
-    "baseUrl": "https://www.instagram.com/",
-    "postCSSSelector": "._mck9w._gvoze._f2mse",
+    "baseUrl": "https://twitter.com/",
+    "postCSSSelector": ".tweet",
     "usernames": [
-      "mcuban",
-      "lewishowes",
-      "garyvee"
+      "chrissanders88",
+      "DidierStevens"
     ]
   }
 }

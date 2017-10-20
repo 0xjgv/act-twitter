@@ -28,8 +28,8 @@ async function extractUrls(browser, username, url, cssSelector) {
     await page.waitForSelector(cssSelector);
 
     const postsUrls = await page.evaluate((selector) => {
-      const anchors = Array.from(document.querySelectorAll(selector));
-      return anchors.map(anchor => anchor.firstElementChild.getAttribute('href'));
+      const targets = Array.from(document.querySelectorAll(selector));
+      return targets.map(target => target.dataset.permalinkPath);
     }, cssSelector);
 
     const parsedPostsUrls = postsUrls.map(parseUrl);
@@ -48,13 +48,13 @@ Apify.main(async () => {
   log('Aqui');
   const input = await Apify.getValue('INPUT');
   log(input);
-  // if (!typeCheck(INPUT_TYPE, input)) {
-  //   log('Expected input:');
-  //   log(INPUT_TYPE);
-  //   log('Received input:');
-  //   dir(input);
-  //   throw new Error('Received invalid input');
-  // }
+  if (!typeCheck(INPUT_TYPE, input)) {
+    log('Expected input:');
+    log(INPUT_TYPE);
+    log('Received input:');
+    dir(input);
+    throw new Error('Received invalid input');
+  }
   const { baseUrl, usernames, postCSSSelector } = input;
   log(baseUrl, usernames);
 
@@ -74,8 +74,6 @@ Apify.main(async () => {
   await Apify.setValue('ALL_LINKS', urls);
   log(urls);
 
-  // TODO: Get the state of crawling (the act might have been restarted)
-  // state = await Apify.getValue('STATE') || DEFAULT_STATE
   log('Closing browser.');
   await browser.close();
 });
