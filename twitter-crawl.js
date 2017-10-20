@@ -13,7 +13,11 @@ const INPUT_TYPE = `{
   extractActInput: Object
 }`;
 
-const results = {};
+// Schema for OUTPUT
+const results = {
+  tweets: []
+};
+const subResult = {};
 
 async function crawlUrl(browser, username, url, cssSelector = 'article') {
   let page = null;
@@ -27,16 +31,18 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
     // Crawl page
     const tagHandle = await page.$(cssSelector);
     crawlResult = await page.evaluate((tag) => {
+      const handle = tag.dataset.screenName;
       const postText = tag.querySelector('.js-tweet-text-container').textContent;
       const time = tag.querySelector('.client-and-actions').textContent;
       return {
+        handle,
         url: document.URL,
         'post-text': postText.trim(),
         'date/time': time.trim(),
       };
     }, tagHandle);
 
-    results[username].push(crawlResult);
+    subResult[username].push(crawlResult);
   } catch (error) {
     throw new Error(`The page ${url}, could not be loaded: ${error}`);
   } finally {
@@ -100,12 +106,13 @@ Apify.main(async () => {
   log('New browser window.');
 
   const crawlData = arrayOfUsers.map(({ username, postsLinks }) => {
-    Object.assign(results, { [username]: [] });
+    Object.assign(subResult, { [username]: [] });
     return postsLinks.reduce((prev, url) => (
       prev.then(() => crawlUrl(browser, username, url, postCSSSelector))
     ), Promise.resolve());
   });
   await Promise.all(crawlData);
+  results.tweets.push(subResult);
 
   log('SETTING OUTPUT RESULT...');
   await Apify.setValue('OUTPUT', results);
