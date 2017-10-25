@@ -1,16 +1,12 @@
 // Crawl links.
 const Apify = require('apify');
 const puppeteer = require('puppeteer');
-const ApifyClient = require('apify-client');
 const { typeCheck } = require('type-check');
-const requestPromise = require('request-promise');
 
 const { log, dir } = console;
 
 const INPUT_TYPE = `{
-  actId: String,
-  token: String,
-  postCSSSelector: String,
+  postCssSelector: String,
   extractActInput: Object | String
 }`;
 
@@ -53,7 +49,6 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
 }
 
 Apify.main(async () => {
-  let uri = null;
   const input = await Apify.getValue('INPUT');
   if (!typeCheck(INPUT_TYPE, input)) {
     log('Expected input:');
@@ -63,39 +58,14 @@ Apify.main(async () => {
     throw new Error('Received invalid input');
   }
   const {
-    actId,
-    token,
-    postCSSSelector,
+    postCssSelector,
     extractActInput,
   } = input;
-  log(extractActInput);
 
-  const waitForFinish = 'waitForFinish=60';
-  uri = `https://api.apify.com/v2/acts/${actId}/runs?token=${token}&${waitForFinish}`;
-  let options = {
-    uri,
-    method: 'POST',
-    'content-type': 'application/json',
-    body: extractActInput,
-    json: true,
-  };
-  log('REQUESTING ACT-EXTRACT...');
-  const { data } = await requestPromise(options);
-  log('ACT-EXTRACT Run result: ', data);
-
-  const storeId = data.defaultKeyValueStoreId;
-  const recordKey = 'ALL_LINKS';
-  uri = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${recordKey}`;
-  options = {
-    uri,
-    method: 'GET',
-    gzip: true,
-    'content-type': 'application/json',
-    json: true,
-  };
-  log('REQUESTING ACT-EXTRACT STORED RECORD...');
-  const arrayOfUsers = await requestPromise(options);
-  log('ACT-Extract Stored record: ', arrayOfUsers);
+  log('Calling link-extractor with extractActInput...');
+  const { output } = await Apify.call('juansgaitan/link-extractor', extractActInput);
+  log('Link-Extractor Data: ', output.body);
+  const arrayOfUsers = output.body;
 
   log('Openning browser...');
   const browser = await puppeteer.launch({
@@ -106,18 +76,14 @@ Apify.main(async () => {
 
   const crawlData = arrayOfUsers.map(({ username, postsLinks }) => (
     postsLinks.reduce((prev, url) => (
-      prev.then(() => crawlUrl(browser, username, url, postCSSSelector))
+      prev.then(() => crawlUrl(browser, username, url, postCssSelector))
     ), Promise.resolve())
   ));
   await Promise.all(crawlData);
-
   log('SETTING OUTPUT RESULT...');
   await Apify.setValue('OUTPUT', results);
 
-  const apifyClient = new ApifyClient({
-    userId: '7e4SJiWuZfFudMsKu',
-    token,
-  });
+  const apifyClient = Apify.client;
 
   const storeName = 'tweets-instagram-posts';
   const store = await apifyClient.keyValueStores.getOrCreateStore({ storeName });
@@ -126,13 +92,17 @@ Apify.main(async () => {
   let record = await apifyClient.keyValueStores.getRecord({ key: storeName });
   log('GETTING PREVIOUS RECORD: ', record);
 
-  if (record.body && record.body.posts) {
-    record.body.posts = [...record.body.posts, ...results.posts];
-    log(record.body.posts);
+  const finalResult = {
+    posts: [],
+  };
+  if (record.body && record.body.posts.length) {
+    const recordUrls = record.body.posts.map(({ url }) => url);
+    const filtered = results.posts.filter(post => !recordUrls.includes(post.url));
+    finalResult.posts.push(...filtered, ...record.body.posts);
+    record = Object.assign({}, finalResult);
   } else {
     record = Object.assign({}, results);
   }
-  log(record);
 
   await apifyClient.keyValueStores.putRecord({
     key: storeName,

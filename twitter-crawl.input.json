@@ -1,10 +1,9 @@
 {
-  "actId": "ipD4qrgEFKNwhep8w",
-  "token": "WS5tRSq9pmnMMCEpsJEvZHhTg",
-  "postCSSSelector": ".permalink-tweet",
+  "postCssSelector": ".permalink-tweet",
   "extractActInput": {
     "baseUrl": "https://twitter.com/",
-    "postCSSSelector": ".tweet",
+    "pageFunction": "const tweets = Array.from(document.querySelectorAll('.tweet')); return tweets.map(tweet => tweet.dataset.permalinkPath);", 
+    "waitForCssSelector": ".tweet",
     "usernames": [
       "chrissanders88",
       "DidierStevens"
