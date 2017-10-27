@@ -1,5 +1,5 @@
-// Crawl links.
 const Apify = require('apify');
+const moment = require('moment');
 const puppeteer = require('puppeteer');
 const { typeCheck } = require('type-check');
 
@@ -37,7 +37,12 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
       };
     }, tagHandle);
 
-    results.posts.push(crawlResult);
+    // Adding only previous day posts.
+    const previousDay = moment().subtract(1, 'day').startOf('day');
+    const postDate = moment(crawlResult['date/time']);
+    if (postDate >= previousDay) {
+      results.posts.push(crawlResult);
+    }
   } catch (error) {
     throw new Error(`The page ${url}, could not be loaded: ${error}`);
   } finally {
@@ -80,35 +85,9 @@ Apify.main(async () => {
     ), Promise.resolve())
   ));
   await Promise.all(crawlData);
-  log('SETTING OUTPUT RESULT...');
+
+  log('Setting OUTPUT result...');
   await Apify.setValue('OUTPUT', results);
-
-  const apifyClient = Apify.client;
-
-  const storeName = 'tweets-instagram-posts';
-  const store = await apifyClient.keyValueStores.getOrCreateStore({ storeName });
-  apifyClient.setOptions({ storeId: store.id });
-
-  let record = await apifyClient.keyValueStores.getRecord({ key: storeName });
-  log('GETTING PREVIOUS RECORD: ', record);
-
-  const finalResult = {
-    posts: [],
-  };
-  if (record.body && record.body.posts.length) {
-    const recordUrls = record.body.posts.map(({ url }) => url);
-    const filtered = results.posts.filter(post => !recordUrls.includes(post.url));
-    finalResult.posts.push(...filtered, ...record.body.posts);
-    record = Object.assign({}, finalResult);
-  } else {
-    record = Object.assign({}, results);
-  }
-
-  await apifyClient.keyValueStores.putRecord({
-    key: storeName,
-    body: JSON.stringify(record, null, 2),
-    contentType: 'application/json',
-  });
 
   log('Closing browser.');
   await browser.close();
