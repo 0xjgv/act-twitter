@@ -39,7 +39,9 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
 
     // Adding only previous day posts.
     const previousDay = moment().subtract(1, 'day').startOf('day');
-    const postDate = moment(crawlResult['date/time']);
+    log('Previous day', previousDay);
+    const postDate = moment(crawlResult['date/time'], 'HH:mm A - DD MMM YYYY');
+    log('Post Date', postDate, crawlResult['date/time']);
     if (postDate >= previousDay) {
       results.posts.push(crawlResult);
     }
