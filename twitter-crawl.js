@@ -1,6 +1,5 @@
 const Apify = require('apify');
 const moment = require('moment');
-const puppeteer = require('puppeteer');
 const { typeCheck } = require('type-check');
 
 const { log, dir } = console;
@@ -11,10 +10,10 @@ const INPUT_TYPE = `{
 }`;
 
 const results = {
-  posts: [],
+  posts: []
 };
 
-async function crawlUrl(browser, username, url, cssSelector = 'article') {
+async function crawlUrl(browser, username, url, cssSelector = 'article', days = 1) {
   let page = null;
   let crawlResult = {};
   try {
@@ -33,12 +32,12 @@ async function crawlUrl(browser, username, url, cssSelector = 'article') {
         handle,
         url: document.URL,
         'post-text': postText.trim(),
-        'date/time': time.trim(),
+        'date/time': time.trim()
       };
     }, tagHandle);
 
     // Adding only previous day posts.
-    const previousDay = moment().subtract(1, 'day').startOf('day');
+    const previousDay = moment().subtract(days, 'day').startOf('day');
     log('Previous day', previousDay);
     const postDate = moment(crawlResult['date/time'], 'HH:mm A - DD MMM YYYY');
     log('Post Date', postDate, crawlResult['date/time']);
@@ -66,7 +65,7 @@ Apify.main(async () => {
   }
   const {
     postCssSelector,
-    extractActInput,
+    extractActInput
   } = input;
 
   log('Calling link-extractor with extractActInput...');
@@ -75,9 +74,8 @@ Apify.main(async () => {
   const arrayOfUsers = output.body;
 
   log('Openning browser...');
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox'],
-    headless: !!process.env.APIFY_HEADLESS,
+  const browser = await Apify.launchPuppeteer({
+    args: ['--no-sandbox']
   });
   log('New browser window.');
 
